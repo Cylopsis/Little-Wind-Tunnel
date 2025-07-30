@@ -1,0 +1,12 @@
+[
+ {
+  "name": "NXP_MCX_CMSIS_DRIVER",
+  "path": "/packages/peripherals/hal-sdk/nxp/nxp-mcx-cmsis",
+  "ver": "latest"
+ },
+ {
+  "name": "NXP_MCX_SERIES_DRIVER",
+  "path": "/packages/peripherals/hal-sdk/nxp/nxp-mcx-series",
+  "ver": "latest"
+ }
+]
