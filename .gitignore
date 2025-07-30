@@ -1,6 +1,9 @@
-*/__pycache__/
+__pycache__/
+build/
+packages/
 tmp/
 out/
+*.bak
 *.d
 *.slo
 *.lo
@@ -16,7 +19,7 @@ out/
 
 # Linker files
 *.ilk
-
+*.dblite
 # Debugger Files
 *.pdb
 

@@ -21,6 +21,9 @@ enum
 #ifdef BSP_USING_I2C0
     I2C0_INDEX,
 #endif
+#ifdef BSP_USING_I2C2
+    I2C2_INDEX,
+#endif
 };
 
 
@@ -48,6 +51,16 @@ struct lpc_i2c_bus lpc_obj[] =
             .clock_div_name = kCLOCK_DivLPI2C0,
             .clock_src = kCLOCK_Fro12M,
             .name = "i2c0",
+        },
+#endif
+#ifdef BSP_USING_I2C2
+        {
+            .I2C = LPI2C2,
+            .baud = 100000U,
+            .clock_attach_id = kFRO12M_to_LPI2C2,
+            .clock_div_name = kCLOCK_DivLPI2C2,
+            .clock_src = kCLOCK_Fro12M,
+            .name = "i2c2",
         },
 #endif
 };

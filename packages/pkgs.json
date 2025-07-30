@@ -1,5 +1,10 @@
 [
  {
+  "name": "U8G2_OFFICIAL",
+  "path": "/packages/multimedia/u8g2/u8g2-official",
+  "ver": "latest"
+ },
+ {
   "name": "NXP_MCX_CMSIS_DRIVER",
   "path": "/packages/peripherals/hal-sdk/nxp/nxp-mcx-cmsis",
   "ver": "latest"
@@ -7,6 +12,11 @@
  {
   "name": "NXP_MCX_SERIES_DRIVER",
   "path": "/packages/peripherals/hal-sdk/nxp/nxp-mcx-series",
+  "ver": "latest"
+ },
+ {
+  "name": "SSD1306",
+  "path": "/packages/peripherals/ssd1306",
   "ver": "latest"
  }
 ]

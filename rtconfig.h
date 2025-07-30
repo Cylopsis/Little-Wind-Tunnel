@@ -85,7 +85,7 @@
 #define RT_HOOK_USING_FUNC_PTR
 #define RT_USING_IDLE_HOOK
 #define RT_IDLE_HOOK_LIST_SIZE 4
-#define IDLE_THREAD_STACK_SIZE 256
+#define IDLE_THREAD_STACK_SIZE 2048
 #define RT_USING_TIMER_SOFT
 #define RT_TIMER_THREAD_PRIO 4
 #define RT_TIMER_THREAD_STACK_SIZE 512
@@ -162,6 +162,7 @@
 #define RT_SERIAL_USING_DMA
 #define RT_SERIAL_RB_BUFSZ 64
 #define RT_USING_I2C
+#define RT_I2C_DEBUG
 #define RT_USING_I2C_BITOPS
 #define RT_USING_PIN
 #define RT_USING_HWTIMER
@@ -282,6 +283,16 @@
 
 /* u8g2: a monochrome graphic library */
 
+#define PKG_USING_U8G2_OFFICIAL
+#define U8G2_USE_HW_I2C
+#define U8G2_I2C_DEVICE_NAME "i2c2"
+
+/* U8G2 Examples */
+
+#define U8G2_USING_HW_I2C_SSD1306
+/* end of U8G2 Examples */
+#define PKG_USING_U8G2_OFFICIAL_LATEST_VERSION
+#define PKG_U8G2_OFFICIAL_VER_NUM 0x99999
 /* end of u8g2: a monochrome graphic library */
 /* end of multimedia packages */
 
@@ -360,6 +371,12 @@
 /* touch drivers */
 
 /* end of touch drivers */
+#define PKG_USING_SSD1306
+#define PKG_USING_SSD1306_DEBUG
+#define PKG_USING_SSD1306_I2C_ADDRESS 0x3C
+#define PKG_USING_SSD1306_I2C_BUS_NAME "i2c2"
+#define PKG_USING_SSD1306_SAMPLE
+#define PKG_USING_SSD1306_LATEST_VERSION
 /* end of peripheral libraries and drivers */
 
 /* AI packages */
@@ -443,6 +460,7 @@
 #define BSP_USING_I2C
 #define BSP_USING_I2C0
 #define BSP_USING_I2C1
+#define BSP_USING_I2C2
 /* end of On-chip Peripheral Drivers */
 
 /* Board extended module Drivers */
