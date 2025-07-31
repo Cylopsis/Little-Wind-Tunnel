@@ -30,15 +30,15 @@ int main(void)
 #endif
 
     rt_kprintf("MCXA156 HelloWorld\r\n");
-    // rt_pin_mode(LED_PIN, PIN_MODE_OUTPUT);  /* Set GPIO as Output */
+    rt_pin_mode(LED_PIN, PIN_MODE_OUTPUT);  /* Set GPIO as Output */
 
-    // while (1)
-    // {
-    //     rt_pin_write(LED_PIN, PIN_HIGH);    /* Set GPIO output 1 */
-    //     rt_thread_mdelay(500);               /* Delay 500mS */
-    //     rt_pin_write(LED_PIN, PIN_LOW);     /* Set GPIO output 0 */
-    //     rt_thread_mdelay(500);               /* Delay 500mS */
-    // }
+    while (1)
+    {
+        rt_pin_write(LED_PIN, PIN_HIGH);    /* Set GPIO output 1 */
+        rt_thread_mdelay(500);               /* Delay 500mS */
+        rt_pin_write(LED_PIN, PIN_LOW);     /* Set GPIO output 0 */
+        rt_thread_mdelay(500);               /* Delay 500mS */
+    }
 }
 
 // end file

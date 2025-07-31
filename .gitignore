@@ -3,6 +3,9 @@ build/
 packages/
 tmp/
 out/
+DebugConfig/
+RTE/
+project.uvguix.*
 *.bak
 *.d
 *.slo
