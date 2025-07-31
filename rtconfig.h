@@ -85,7 +85,7 @@
 #define RT_HOOK_USING_FUNC_PTR
 #define RT_USING_IDLE_HOOK
 #define RT_IDLE_HOOK_LIST_SIZE 4
-#define IDLE_THREAD_STACK_SIZE 2048
+#define IDLE_THREAD_STACK_SIZE 1024
 #define RT_USING_TIMER_SOFT
 #define RT_TIMER_THREAD_PRIO 4
 #define RT_TIMER_THREAD_STACK_SIZE 512
@@ -167,6 +167,7 @@
 #define RT_USING_I2C
 #define RT_I2C_DEBUG
 #define RT_USING_I2C_BITOPS
+#define RT_USING_PWM
 #define RT_USING_SPI
 #define RT_USING_WIFI
 #define RT_WLAN_DEVICE_STA_NAME "wlan0"
@@ -554,6 +555,8 @@
 #define BSP_USING_I2C2
 #define BSP_USING_SPI
 #define BSP_USING_SPI1
+#define BSP_USING_PWM
+#define BSP_USING_PWM0
 /* end of On-chip Peripheral Drivers */
 
 /* Board extended module Drivers */
@@ -565,5 +568,17 @@
 #define BOARD_RW007_RST_PIN 0x2F
 /* end of Board extended module Drivers */
 /* end of Hardware Drivers Config */
+
+/* Application Configuration */
+
+/* Fan Configuration */
+
+#define PKG_USING_YS4028B12H
+#define PKG_USING_YS4028B12H_PWM_DEV_NAME "pwm0"
+#define PKG_USING_YS4028B12H_PWM_CHANNEL 0
+#define PKG_USING_YS4028B12H_PERIOD 40000
+#define PKG_USING_YS4028B12H_DEFAULT_PAULSE 10000
+/* end of Fan Configuration */
+/* end of Application Configuration */
 
 #endif

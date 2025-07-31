@@ -88,6 +88,8 @@ void BOARD_InitPins(void)
     RESET_ReleasePeripheralReset(kLPUART0_RST_SHIFT_RSTn);
     /* LPI2C2 peripheral is released from reset */
     RESET_ReleasePeripheralReset(kLPI2C2_RST_SHIFT_RSTn);
+    /* FLEXPWM0 peripheral is released from reset */
+    RESET_ReleasePeripheralReset(kFLEXPWM0_RST_SHIFT_RSTn);
 
     const port_pin_config_t port0_2_pin78_config = {/* Internal pull-up resistor is enabled */
                                                     kPORT_PullUp,
@@ -297,7 +299,24 @@ void BOARD_InitPins(void)
     /* PORT2_6 (pin 20) is configured as LPSPI1_PCS1 */
     PORT_SetPinConfig(PORT2, 6U, &port2_6_pin28_config);
 #endif
+    /* PORT3_6 (pin 71) is configured as PWM0_A0 */
+    PORT_SetPinMux(PORT3, 6U, kPORT_MuxAlt5);
 
+    PORT3->PCR[6] = ((PORT3->PCR[6] &
+                      /* Mask bits to zero which are setting */
+                      (~(PORT_PCR_IBE_MASK)))
+
+                     /* Input Buffer Enable: Enables. */
+                     | PORT_PCR_IBE(PCR_IBE_ibe1));
+        /* PORT3_8 (pin 69) is configured as PWM0_A1 */
+    PORT_SetPinMux(PORT3, 8U, kPORT_MuxAlt5);
+
+    PORT3->PCR[8] = ((PORT3->PCR[8] &
+                      /* Mask bits to zero which are setting */
+                      (~(PORT_PCR_IBE_MASK)))
+
+                     /* Input Buffer Enable: Enables. */
+                     | PORT_PCR_IBE(PCR_IBE_ibe1));
 }
 /***********************************************************************************************************************
  * EOF
