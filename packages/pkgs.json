@@ -20,6 +20,16 @@
   "ver": "latest"
  },
  {
+  "name": "VL53L0X",
+  "path": "/packages/peripherals/sensors/vl53l0x",
+  "ver": "latest"
+ },
+ {
+  "name": "I2C_TOOLS",
+  "path": "/packages/peripherals/i2c-tools",
+  "ver": "latest"
+ },
+ {
   "name": "SSD1306",
   "path": "/packages/peripherals/ssd1306",
   "ver": "latest"

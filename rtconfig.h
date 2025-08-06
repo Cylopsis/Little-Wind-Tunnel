@@ -74,7 +74,7 @@
 
 /* end of rt_strnlen options */
 /* end of klibc options */
-#define RT_NAME_MAX 10
+#define RT_NAME_MAX 16
 #define RT_CPUS_NR 1
 #define RT_ALIGN_SIZE 8
 #define RT_THREAD_PRIORITY_32
@@ -88,7 +88,7 @@
 #define IDLE_THREAD_STACK_SIZE 1024
 #define RT_USING_TIMER_SOFT
 #define RT_TIMER_THREAD_PRIO 4
-#define RT_TIMER_THREAD_STACK_SIZE 512
+#define RT_TIMER_THREAD_STACK_SIZE 1024
 
 /* kservice options */
 
@@ -167,8 +167,17 @@
 #define RT_USING_I2C
 #define RT_I2C_DEBUG
 #define RT_USING_I2C_BITOPS
+#define RT_USING_SOFT_I2C
+#define RT_USING_SOFT_I2C1
+#define RT_SOFT_I2C1_SCL_PIN 22
+#define RT_SOFT_I2C1_SDA_PIN 23
+#define RT_SOFT_I2C1_BUS_NAME "i2c1"
+#define RT_SOFT_I2C1_TIMING_DELAY 10
+#define RT_SOFT_I2C1_TIMING_TIMEOUT 10
 #define RT_USING_PWM
 #define RT_USING_SPI
+#define RT_USING_SENSOR
+#define RT_USING_SENSOR_CMD
 #define RT_USING_WIFI
 #define RT_WLAN_DEVICE_STA_NAME "wlan0"
 #define RT_WLAN_DEVICE_AP_NAME "wlan1"
@@ -294,8 +303,8 @@
 /* Utilities */
 
 #define RT_USING_ULOG
-#define ULOG_OUTPUT_LVL_D
-#define ULOG_OUTPUT_LVL 7
+#define ULOG_OUTPUT_LVL_I
+#define ULOG_OUTPUT_LVL 6
 #define ULOG_ASSERT_ENABLE
 #define ULOG_LINE_BUF_SIZE 128
 
@@ -460,11 +469,17 @@
 
 /* sensors drivers */
 
+#define PKG_USING_VL53L0X
+#define PKG_VL53L0X_USING_SENSOR_V1
+#define PKG_VL53L0X_USING_SENSOR_V1_SAMPLE
+#define PKG_USING_VL53L0X_LATEST_VERSION
 /* end of sensors drivers */
 
 /* touch drivers */
 
 /* end of touch drivers */
+#define PKG_USING_I2C_TOOLS
+#define PKG_USING_I2C_TOOLS_LATEST_VERSION
 #define PKG_USING_SSD1306
 #define PKG_USING_SSD1306_DEBUG
 #define PKG_USING_SSD1306_I2C_ADDRESS 0x3C
@@ -553,6 +568,7 @@
 #define BSP_USING_UART0
 #define BSP_USING_I2C
 #define BSP_USING_I2C2
+#define BSP_USING_I2C3
 #define BSP_USING_SPI
 #define BSP_USING_SPI1
 #define BSP_USING_PWM

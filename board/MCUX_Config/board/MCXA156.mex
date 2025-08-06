@@ -24,6 +24,10 @@
          </generated_project_files>
          <pins_profile>
             <processor_version>25.06.10</processor_version>
+            <pin_labels>
+               <pin_label pin_num="61" pin_signal="P3_14/LPUART2_RXD/LPUART3_CTS_B/CT_INP6/PWM0_X2/FLEXIO0_D22/PWM1_A1" label="FG方波信号"/>
+               <pin_label pin_num="59" pin_signal="P3_16/LPUART4_RTS_B/CT_INP8/FLEXIO0_D24/PWM1_A0" label="输出PWM控制风扇转速"/>
+            </pin_labels>
          </pins_profile>
          <functions_list>
             <function name="BOARD_InitPins">
@@ -40,6 +44,11 @@
                      </feature>
                   </dependency>
                   <dependency resourceType="Peripheral" resourceId="LPI2C2" description="Peripheral LPI2C2 signals are routed in the Pins Tool, but the peripheral is not initialized in the Peripherals Tool." problem_level="1" source="Pins:BOARD_InitPins">
+                     <feature name="initialized" evaluation="equal">
+                        <data>true</data>
+                     </feature>
+                  </dependency>
+                  <dependency resourceType="Peripheral" resourceId="FlexPWM0" description="Peripheral FlexPWM0 signals are routed in the Pins Tool, but the peripheral is not initialized in the Peripherals Tool." problem_level="1" source="Pins:BOARD_InitPins">
                      <feature name="initialized" evaluation="equal">
                         <data>true</data>
                      </feature>
@@ -88,6 +97,16 @@
                      <pin_features>
                         <pin_feature name="pull_select" value="up"/>
                         <pin_feature name="pull_enable" value="enable"/>
+                     </pin_features>
+                  </pin>
+                  <pin peripheral="FlexPWM0" signal="A, 0" pin_num="71" pin_signal="P3_6/CLKOUT/LPSPI1_PCS3/LPUART3_RTS_B/CT4_MAT2/PWM0_A0/FLEXIO0_D14/PWM1_A0">
+                     <pin_features>
+                        <pin_feature name="direction" value="OUTPUT"/>
+                     </pin_features>
+                  </pin>
+                  <pin peripheral="FlexPWM0" signal="A, 1" pin_num="69" pin_signal="P3_8/TRIG_IN3/LPSPI1_SDO/LPUART1_RXD/CT_INP4/PWM0_A1/FLEXIO0_D16">
+                     <pin_features>
+                        <pin_feature name="direction" value="INPUT"/>
                      </pin_features>
                   </pin>
                </pins>

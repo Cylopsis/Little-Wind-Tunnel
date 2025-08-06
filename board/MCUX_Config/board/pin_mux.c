@@ -317,6 +317,58 @@ void BOARD_InitPins(void)
 
                      /* Input Buffer Enable: Enables. */
                      | PORT_PCR_IBE(PCR_IBE_ibe1));
+#ifdef BSP_USING_I2C3
+    /* LPI2C3 peripheral is released from reset */
+    RESET_ReleasePeripheralReset(kLPI2C0_RST_SHIFT_RSTn);
+    const port_pin_config_t port3_28_pin51_config = {/* Internal pull-up resistor is enabled */
+                                                     .pullSelect = kPORT_PullUp,
+                                                     /* Low internal pull resistor value is selected. */
+                                                     .pullValueSelect = kPORT_LowPullResistor,
+                                                     /* Fast slew rate is configured */
+                                                     .slewRate = kPORT_FastSlewRate,
+                                                     /* Passive input filter is disabled */
+                                                     .passiveFilterEnable = kPORT_PassiveFilterDisable,
+                                                     /* Open drain output is disabled */
+                                                     .openDrainEnable = kPORT_OpenDrainDisable,
+                                                     /* Low drive strength is configured */
+                                                     .driveStrength = kPORT_LowDriveStrength,
+                                                     /* Normal drive strength is configured */
+                                                     .driveStrength1 = kPORT_NormalDriveStrength,
+                                                     /* Pin is configured as LPI2C3_SDA */
+                                                     .mux = kPORT_MuxAlt2,
+                                                     /* Digital input enabled */
+                                                     .inputBuffer = kPORT_InputBufferEnable,
+                                                     /* Digital input is not inverted */
+                                                     .invertInput = kPORT_InputNormal,
+                                                     /* Pin Control Register fields [15:0] are not locked */
+                                                     .lockRegister = kPORT_UnlockRegister};
+    /* PORT3_28 (pin 51) is configured as LPI2C3_SCL */
+    PORT_SetPinConfig(PORT3, 28U, &port3_28_pin51_config);
+    const port_pin_config_t port3_27_pin52_config = {/* Internal pull-up resistor is enabled */
+                                                     .pullSelect = kPORT_PullUp,
+                                                     /* Low internal pull resistor value is selected. */
+                                                     .pullValueSelect = kPORT_LowPullResistor,
+                                                     /* Fast slew rate is configured */
+                                                     .slewRate = kPORT_FastSlewRate,
+                                                     /* Passive input filter is disabled */
+                                                     .passiveFilterEnable = kPORT_PassiveFilterDisable,
+                                                     /* Open drain output is disabled */
+                                                     .openDrainEnable = kPORT_OpenDrainDisable,
+                                                     /* Low drive strength is configured */
+                                                     .driveStrength = kPORT_LowDriveStrength,
+                                                     /* Normal drive strength is configured */
+                                                     .driveStrength1 = kPORT_NormalDriveStrength,
+                                                     /* Pin is configured as LPI2C3_SCL */
+                                                     .mux = kPORT_MuxAlt2,
+                                                     /* Digital input enabled */
+                                                     .inputBuffer = kPORT_InputBufferEnable,
+                                                     /* Digital input is not inverted */
+                                                     .invertInput = kPORT_InputNormal,
+                                                     /* Pin Control Register fields [15:0] are not locked */
+                                                     .lockRegister = kPORT_UnlockRegister};
+    /* PORT3_27 (pin 52) is configured as LPI2C3_SCL */
+    PORT_SetPinConfig(PORT3, 27U, &port3_27_pin52_config);
+#endif
 }
 /***********************************************************************************************************************
  * EOF

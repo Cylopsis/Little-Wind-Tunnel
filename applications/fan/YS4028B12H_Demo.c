@@ -4,10 +4,6 @@
 static int set_speed(int argc, char **argv)
 {
     ys4028b12h_cfg_t cfg = &my_ys4028b12h_config;
-    if (cfg->name == RT_NULL) {
-        ys4028b12h_init(cfg);
-    }
-
     float speed = atof(argv[1]);
     rt_err_t result = ys4028b12h_set_speed(cfg, speed);
     

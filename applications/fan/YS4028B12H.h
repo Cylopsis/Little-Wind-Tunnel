@@ -1,3 +1,6 @@
+#ifndef __YS4028B12H_H
+#define __YS4028B12H_H
+
 #include <rtthread.h>
 #include <rtdevice.h>
 #include <stdlib.h>
@@ -23,3 +26,5 @@ rt_err_t ys4028b12h_set_speed(ys4028b12h_cfg_t cfg,float speed);
 rt_err_t ys4028b12h_control(ys4028b12h_cfg_t cfg,int speed,int dir);
 rt_err_t ys4028b12h_get(ys4028b12h_cfg_t cfg);
 float ys4028b12h_get_speed(ys4028b12h_cfg_t cfg);
+
+#endif
