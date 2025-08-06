@@ -1,23 +1,25 @@
+#include <rtthread.h>
 #include <rtdevice.h>
 #include "drv_pin.h"
 #include "YS4028B12H.h"
+#include <stdlib.h> // for atof()
+#include <string.h> // for strcmp()
 
 /*******************************************************************************
  * 宏定义
  ******************************************************************************/
 #define LED_PIN        ((3*32)+12)
-
-/* PID 控制器参数 - !!! 这些值需要根据实际情况进行调试 !!! */
-#define KP                 0.005f  // 比例系数 (Proportional gain)
-#define KI                 0.001f  // 积分系数 (Integral gain)
-#define KD                 0.002f  // 微分系数 (Derivative gain)
 #define SAMPLE_DELAY_MS    50      // 控制周期/采样周期 (ms)，50ms即20Hz
 
 /*******************************************************************************
  * 全局变量
  ******************************************************************************/
 rt_thread_t working_indicate = RT_NULL;
+/* PID 控制器参数 - 这些值现在可以通过MSH命令动态修改 */
 float target_height = 250.0f; // 目标高度 (mm)
+float KP = 0.005f;  // 比例系数 (Proportional gain)
+float KI = 0.001f;  // 积分系数 (Integral gain)
+float KD = 0.002f;  // 微分系数 (Derivative gain)
 
 /* PID 控制器状态变量 */
 float integral_error = 0.0f;
@@ -37,6 +39,65 @@ void working_led() {
         rt_thread_mdelay(500);              /* Delay 500mS */
     }
 }
+/**
+ * @brief MSH command to tune PID parameters.
+ *
+ * Usage:
+ * pid_tune                  - Show current PID parameters.
+ * pid_tune -p <value>       - Set Kp value.
+ * pid_tune -i <value>       - Set Ki value.
+ * pid_tune -d <value>       - Set Kd value.
+ * pid_tune -t <value>       - Set target height (mm).
+ *
+ * Example:
+ * pid_tune -p 0.006 -i 0.0015
+ */
+static void pid_tune(int argc, char **argv)
+{
+    if (argc < 2)
+    {
+        rt_kprintf("Current PID Parameters:\n");
+        rt_kprintf("  Target Height: %.2f mm\n", target_height);
+        rt_kprintf("  Kp: %f\n", KP);
+        rt_kprintf("  Ki: %f\n", KI);
+        rt_kprintf("  Kd: %f\n", KD);
+        rt_kprintf("\nUsage:\n");
+        rt_kprintf("  pid_tune -p <val> -i <val> -d <val> -t <val>\n");
+        return;
+    }
+
+    /* Parse arguments */
+    for (int i = 1; i < argc; i += 2)
+    {
+        if (i + 1 >= argc) {
+            rt_kprintf("Error: Missing value for option %s\n", argv[i]);
+            return;
+        }
+
+        if (strcmp(argv[i], "-p") == 0) {
+            KP = atof(argv[i+1]);
+        } else if (strcmp(argv[i], "-i") == 0) {
+            KI = atof(argv[i+1]);
+        } else if (strcmp(argv[i], "-d") == 0) {
+            KD = atof(argv[i+1]);
+        } else if (strcmp(argv[i], "-t") == 0) {
+            target_height = atof(argv[i+1]);
+            // 当目标高度改变时，重置PID状态变量以避免旧的误差累积产生突变
+            integral_error = 0.0f;
+            previous_error = 0.0f;
+            rt_kprintf("PID state reset due to target height change.\n");
+        } else {
+            rt_kprintf("Error: Unknown option %s\n", argv[i]);
+            return;
+        }
+    }
+
+    rt_kprintf("PID parameters updated.\n");
+    // 打印更新后的值
+    pid_tune(1, RT_NULL);
+}
+MSH_CMD_EXPORT(pid_tune, Tune PID parameters for ball suspension);
+
 
 int main(void)
 {
@@ -65,7 +126,6 @@ int main(void)
     if (cfg->name == RT_NULL) {
         ys4028b12h_init(cfg);
     }
-    // 先将风扇速度设置为0
     ys4028b12h_set_speed(cfg, 0.0f);
     rt_kprintf("Fan initialized.\n");
 
@@ -82,7 +142,8 @@ int main(void)
         rt_kprintf("Error: open tof_vl53l0x failed\r\n");
         return -1;
     }
-    rt_kprintf("VL53L0X device opened. Target height: %.1f mm\n", target_height);
+    rt_kprintf("VL53L0X device opened. Initial target height: %.1f mm\n", target_height);
+    rt_kprintf("Type 'pid_tune' in MSH for parameter tuning.\n");
 
     /* 主控制循环 */
     while (1)
@@ -93,63 +154,56 @@ int main(void)
         if (res != 1)
         {
             rt_kprintf("Warning: read vl53l0x data failed! res: %d\n", res);
-            // 读取失败时，关闭风扇以策安全
             ys4028b12h_set_speed(cfg, 0.0f);
-            rt_thread_mdelay(500); // 等待一段时间再重试
+            rt_thread_mdelay(500);
             continue;
         }
 
-        // 获取当前高度 (mm)。VL53L0X超出范围时可能返回8190或8191
         int32_t current_height = sensor_data.data.proximity;
 
-        // 如果没有检测到物体或物体太远，关闭风扇
         if (current_height > 8000) {
-            rt_kprintf("Ball not detected. Turning off fan.\n");
+            if (previous_error != 9999) { // 避免重复打印
+                 rt_kprintf("Ball not detected. Turning off fan.\n");
+            }
             ys4028b12h_set_speed(cfg, 0.0f);
-            integral_error = 0; // 重置积分项
-            previous_error = 0; // 重置微分项
+            integral_error = 0;
+            previous_error = 9999; // 使用一个特殊值标记为未检测到
             rt_thread_mdelay(SAMPLE_DELAY_MS);
             continue;
         }
 
         /* --- PID 控制器核心计算 --- */
-
-        // 1. 计算误差
         float error = target_height - (float)current_height;
-
-        // 2. 计算积分项 (带抗积分饱和)
-        // 只有在风扇未达到饱和状态时才累加积分，防止积分无限制增长（积分饱和）
-        // 这里简化处理，可以后续添加更精细的抗饱和逻辑
         integral_error += error;
-
-        // 3. 计算微分项
         float derivative_error = error - previous_error;
-
-        // 4. 计算PID总输出
+        // 如果是从“未检测到”状态恢复，则不计算微分项，避免突变
+        if (previous_error == 9999) {
+            derivative_error = 0;
+        }
         float pid_output = (KP * error) + (KI * integral_error) + (KD * derivative_error);
-
-        // 5. 更新上一次的误差
         previous_error = error;
 
-        // 6. 将PID输出转换为风扇速度 (0.0f to 1.0f)
+        /* --- 输出限幅与应用 --- */
         float fan_speed = pid_output;
         if (fan_speed > 1.0f) {
             fan_speed = 1.0f;
+            // 积分抗饱和：当输出饱和时，阻止积分项继续增长
+            integral_error -= error;
         }
         if (fan_speed < 0.0f) {
             fan_speed = 0.0f;
+             // 积分抗饱和：当输出饱和时，阻止积分项继续减小
+            integral_error -= error;
         }
         ys4028b12h_set_speed(cfg, fan_speed);
 
-        // 打印调试信息
-        rt_kprintf("H: %4dmm, E: %6.1f, P: %5.2f, I: %5.2f, D: %5.2f, Speed: %.2f\r\n",
-                   current_height, error, (KP * error), (KI * integral_error), (KD * derivative_error), fan_speed);
+        /* 打印调试信息 (可以考虑使用一个MSH命令来开关此打印，避免刷屏) */
+        // rt_kprintf("H:%4d, E:%6.1f, P:%5.2f, I:%5.2f, D:%5.2f, Spd:%.2f\r\n",
+        //           current_height, error, (KP * error), (KI * integral_error), (KD * derivative_error), fan_speed);
 
-        // 等待下一个控制周期
         rt_thread_mdelay(SAMPLE_DELAY_MS);
     }
 
-    // 理论上不会执行到这里
     rt_device_close(tof_dev);
     return 0;
 }
