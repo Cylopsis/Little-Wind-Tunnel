@@ -1,0 +1,11 @@
+30s test results:
+Kp=0.00129254, Ki=0.00013687, Kd=0.01502631     Score received: 15028.0(test for 30s)
+--> pid_tune -p 0.00129254 -i 0.00013687 -d 0.01502631
+Kp=0.00125240, Ki=0.00013529, Kd=0.01496370     Score received: 22181.0(test for 30s)
+--> pid_tune -p 0.00125240 -i 0.00013529 -d 0.01496370
+Kp=0.00126940, Ki=0.00013013, Kd=0.01480833     Score received: 25170.0(test for 30s)
+--> pid_tune -p 0.00126940 -i 0.00013013 -d 0.01480833
+Kp=0.00126044, Ki=0.00010196, Kd=0.01504031     Score received: 21535.0(test for 30s)
+--> pid_tune -p 0.00126044 -i 0.00010196 -d 0.01504031
+Kp=0.00151456, Ki=0.00020457, Kd=0.00763392     Score received: 10051.0(test for 30s)
+--> pid_tune -p 0.00151456 -i 0.00020457 -d 0.00763392
