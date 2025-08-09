@@ -8,11 +8,10 @@
 /*******************************************************************************
  * 宏定义
  ******************************************************************************/
-#define LED_PIN        ((3*32)+12)      // 工作指示灯引脚
-#define SAMPLE_DELAY_MS    20           // 控制周期/采样周期 (ms)
-#define RAMP_STEP          0.5f         // 设定值斜坡步长 (mm/cycle)
-#define MIN_HEIGHT        100.0f        // 最小高度 (mm)
-#define FABS(x) ((x) > 0 ? (x) : -(x))  // 绝对值宏
+#define LED_PIN        ((3*32)+12)
+#define SAMPLE_DELAY_MS    20      // 控制周期/采样周期 (ms)
+#define RAMP_STEP          0.5f    // 设定值斜坡步长 (mm/cycle)
+#define FABS(x) ((x) > 0 ? (x) : -(x)) // 自定义浮点数绝对值宏
 
 /*******************************************************************************
  * 全局变量
@@ -20,7 +19,7 @@
 rt_thread_t working_indicate = RT_NULL;
 
 /* PID 控制器参数 */
-int32_t current_height = 20;  // 当前高度 (mm)
+int32_t current_height = 20; // 当前高度 (mm)
 float target_height = 250.0f; // 用户设定的最终目标高度 (mm)
 float ramped_height = 250.0f; // PID控制器当前正在追踪的、平滑变化的目标高度
 
@@ -33,9 +32,11 @@ float integral_error = 0.0f;
 float previous_error = 0.0f;
 
 /* PID 控制参数评估 */
-static void pid_tune(int argc, char **argv);
 rt_bool_t is_evaluating = RT_FALSE;
 float total_abs_error = 0.0f;
+
+/* --- 第1项改进: 优化的PID增益调度表 --- */
+// 注意: 以下数值为根据分析提供的示例，实际最优值需要通过实验确定！
 typedef struct {
     float height;
     float kp;
@@ -43,7 +44,6 @@ typedef struct {
     float kd;
 } pid_profile_t;
 
-/* --- PID增益调度表 --- PS：每个高度点只运行了30s,60个迭代的贝叶斯算法，还可以再优化优化 */
 const pid_profile_t gain_schedule_table[] = {
     // {高度, Kp, Ki, Kd}
     {50.0f,  0.02700000f, 0.00080000f, 0.01300000f},
@@ -62,7 +62,7 @@ typedef struct {
     float height;
     float base_fan_speed;
 } feedforward_profile_t;
-/* --- 前馈速度表 --- PS:0.3这个速度是可以让小球缓慢上升的速度，这个风扇的硬件条件就找不到一个能让小球悬停的速度 */
+
 feedforward_profile_t ff_table[] = {
     {50.0f,  0.3f},
     {100.0f, 0.3f},
@@ -80,7 +80,7 @@ const int num_ff_profiles = sizeof(ff_table) / sizeof(ff_table[0]);
  * 函数
  ******************************************************************************/
 void update_pid_gains_by_target(float current_target);
-float get_feedforward_speed(float target_height); // 前馈计算
+float get_feedforward_speed(float target_height); // 前馈计算函数
 void working_led() {
     rt_pin_mode(LED_PIN, PIN_MODE_OUTPUT);
     while (1)
@@ -91,6 +91,65 @@ void working_led() {
         rt_thread_mdelay(500);
     }
 }
+
+static void pid_tune(int argc, char **argv)
+{
+    // 显示帮助信息
+    if (argc < 2) {
+        rt_kprintf("--- PID & Feedforward Status ---\n");
+        rt_kprintf("  Final Target: %.2f mm, Ramped Target: %.2f mm\n", target_height, ramped_height);
+        rt_kprintf("  Kp: %f, Ki: %f, Kd: %f\n", KP, KI, KD);
+        rt_kprintf("\n--- Usage ---\n");
+        rt_kprintf("  pid_tune -t <val>                    (Set target height)\n");
+        rt_kprintf("  pid_tune -p <val> -i <val> -d <val>  (Manual PID override)\n");
+        rt_kprintf("  pid_tune -ff                         (Show Feedforward table)\n");
+        rt_kprintf("  pid_tune -ff_set <idx> <h> <spd>     (Set Feedforward entry)\n");
+        rt_kprintf("    e.g., pid_tune -ff_set 2 100.0 0.45\n");
+        return;
+    }
+
+    // 处理特殊命令
+    if (strcmp(argv[1], "-ff") == 0) {
+        rt_kprintf("--- Feedforward Table ---\n");
+        rt_kprintf("Idx | Height (mm) | Base Speed\n");
+        rt_kprintf("----|-------------|-----------\n");
+        for (int i = 0; i < num_ff_profiles; i++) {
+            rt_kprintf("%-3d | %-11.1f | %.4f\n", i, ff_table[i].height, ff_table[i].base_fan_speed);
+        }
+        return;
+    }
+
+    if (strcmp(argv[1], "-ff_set") == 0) {
+        if (argc != 5) {
+            rt_kprintf("Error: Incorrect arguments for -ff_set.\n");
+            rt_kprintf("Usage: pid_tune -ff_set <index> <height> <speed>\n");
+            return;
+        }
+        int index = atoi(argv[2]);
+        if (index < 0 || index >= num_ff_profiles) {
+            rt_kprintf("Error: Index %d is out of bounds (0-%d).\n", index, num_ff_profiles - 1);
+            return;
+        }
+        ff_table[index].height = atof(argv[3]);
+        ff_table[index].base_fan_speed = atof(argv[4]);
+        rt_kprintf("Feedforward table entry %d updated to: Height=%.1f, Speed=%.4f\n",
+                   index, ff_table[index].height, ff_table[index].base_fan_speed);
+        return;
+    }
+
+    // 解析传统的PID和目标设置参数
+    for (int i = 1; i < argc; i += 2) {
+        if (strcmp(argv[i], "-p") == 0) { KP = atof(argv[i+1]); }
+        else if (strcmp(argv[i], "-i") == 0) { KI = atof(argv[i+1]); }
+        else if (strcmp(argv[i], "-d") == 0) { KD = atof(argv[i+1]); }
+        else if (strcmp(argv[i], "-t") == 0) { target_height = atof(argv[i+1]); }
+        else { rt_kprintf("Error: Unknown option %s\n", argv[i]); return; }
+    }
+    rt_kprintf("Parameters updated. Current status:\n");
+    pid_tune(1, RT_NULL); // 显示更新后的状态
+}
+MSH_CMD_EXPORT(pid_tune, Tune PID and Feedforward parameters);
+
 
 void update_pid_gains_by_target(float current_target)
 {
@@ -192,11 +251,11 @@ int main(void)
         current_height = sensor_data.data.proximity;
         if (current_height > 8000) { rt_kprintf("Warning: Height exceeds 8000\n"); continue; }
 
-        /* --- 设定值斜坡 --- PS：这里会有0.5的误差，懒得调了 */
+        /* --- 设定值斜坡 --- */
         if (FABS(ramped_height - target_height) > RAMP_STEP) {
             if (ramped_height < target_height) ramped_height += RAMP_STEP;
             else ramped_height -= RAMP_STEP;
-            update_pid_gains_by_target(ramped_height);
+            update_pid_gains_by_target(ramped_height); // 斜坡过程中更新PID增益
         } else {
             ramped_height = target_height;
         }
@@ -215,7 +274,7 @@ int main(void)
         float ff_speed = get_feedforward_speed(ramped_height);
         float final_fan_speed = ff_speed + pid_output;
 
-        /* --- 输出限幅与积分抗饱和 --- */
+        /* --- 输出限幅与应用 (带积分抗饱和) --- */
         if (final_fan_speed > 1.0f) {
             final_fan_speed = 1.0f;
             integral_error -= error; // 抗饱和
@@ -236,67 +295,6 @@ int main(void)
 /*******************************************************************************
  * 评测用
  ******************************************************************************/
-
-static void pid_tune(int argc, char **argv)
-{
-    if (argc < 2) {
-        rt_kprintf("--- PID & Feedforward Status ---\n");
-        rt_kprintf("  Final Target: %.2f mm, Ramped Target: %.2f mm\n", target_height, ramped_height);
-        rt_kprintf("  Kp: %f, Ki: %f, Kd: %f\n", KP, KI, KD);
-        rt_kprintf("\n--- Usage ---\n");
-        rt_kprintf("  pid_tune -t <val>                    (Set target height)\n");
-        rt_kprintf("  pid_tune -p <val> -i <val> -d <val>  (Manual PID override)\n");
-        rt_kprintf("  pid_tune -ff                         (Show Feedforward table)\n");
-        rt_kprintf("  pid_tune -ff_set <idx> <h> <spd>     (Set Feedforward entry)\n");
-        rt_kprintf("    e.g., pid_tune -ff_set 2 100.0 0.45\n");
-        return;
-    }
-
-    if (strcmp(argv[1], "-ff") == 0) {
-        rt_kprintf("--- Feedforward Table ---\n");
-        rt_kprintf("Idx | Height (mm) | Base Speed\n");
-        rt_kprintf("----|-------------|-----------\n");
-        for (int i = 0; i < num_ff_profiles; i++) {
-            rt_kprintf("%-3d | %-11.1f | %.4f\n", i, ff_table[i].height, ff_table[i].base_fan_speed);
-        }
-        return;
-    }
-
-    if (strcmp(argv[1], "-ff_set") == 0) {
-        if (argc != 5) {
-            rt_kprintf("Error: Incorrect arguments for -ff_set.\n");
-            rt_kprintf("Usage: pid_tune -ff_set <index> <height> <speed>\n");
-            return;
-        }
-        int index = atoi(argv[2]);
-        if (index < 0 || index >= num_ff_profiles) {
-            rt_kprintf("Error: Index %d is out of bounds (0-%d).\n", index, num_ff_profiles - 1);
-            return;
-        }
-        ff_table[index].height = atof(argv[3]);
-        ff_table[index].base_fan_speed = atof(argv[4]);
-        rt_kprintf("Feedforward table entry %d updated to: Height=%.1f, Speed=%.4f\n",
-                   index, ff_table[index].height, ff_table[index].base_fan_speed);
-        return;
-    }
-
-    for (int i = 1; i < argc; i += 2) {
-        if (strcmp(argv[i], "-p") == 0) { KP = atof(argv[i+1]); }
-        else if (strcmp(argv[i], "-i") == 0) { KI = atof(argv[i+1]); }
-        else if (strcmp(argv[i], "-d") == 0) { KD = atof(argv[i+1]); }
-        else if (strcmp(argv[i], "-t") == 0) {
-            target_height = atof(argv[i+1]);
-            if (target_height < MIN_HEIGHT) {
-                rt_kprintf("Warning: Target height is below minimum (%f mm). Clamping to %f mm.\n", target_height, MIN_HEIGHT);
-                target_height = MIN_HEIGHT;
-            }
-        }
-        else { rt_kprintf("Error: Unknown option %s\n", argv[i]); return; }
-    }
-    rt_kprintf("Parameters updated. Current status:\n");
-    pid_tune(1, RT_NULL); // 显示更新后的状态
-}
-MSH_CMD_EXPORT(pid_tune, Tune PID and Feedforward parameters);
 
 void pid_eval(int argc, char **argv)
 {
