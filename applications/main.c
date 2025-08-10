@@ -4,6 +4,7 @@
 #include "YS4028B12H.h"
 #include <stdlib.h> // for atof()
 #include <string.h> // for strcmp()
+#include <system_vars.h>
 
 /*******************************************************************************
  * 宏定义
@@ -18,6 +19,7 @@
  * 全局变量
  ******************************************************************************/
 rt_thread_t working_indicate = RT_NULL;
+// rt_thread_t remote_thread = RT_NULL;
 
 /* PID 控制器参数 */
 int32_t current_height = 20;  // 当前高度 (mm)
@@ -46,15 +48,15 @@ typedef struct {
 /* --- PID增益调度表 --- PS：每个高度点只运行了30s,60个迭代的贝叶斯算法，还可以再优化优化 */
 const pid_profile_t gain_schedule_table[] = {
     // {高度, Kp, Ki, Kd}
-    {50.0f,  0.02700000f, 0.00080000f, 0.01300000f},
-    {100.0f, 0.00238823f, 0.00018420f, 0.01759602f},
+    {50.0f, 0.03042419f, 0.00000174f, 0.00651698f}, // Best Score: 2148.0
+    {100.0f, 0.00199807f, 0.00028206f, 0.01910421f}, // Best Score: 2012.0
     {150.0f, 0.00150062f, 0.00013645f, 0.01424987f},
-    {200.0f, 0.00273804f, 0.00005707f, 0.01384286f},
-    {250.0f, 0.00215347f, 0.00010309f, 0.00857251f},
-    {300.0f, 0.00245299f, 0.00008689f, 0.01209851f},
-    {350.0f, 0.00255815f, 0.00026372f, 0.01642789f},
-    {400.0f, 0.00308520f, 0.00019811f, 0.01500000f},
-    {450.0f, 0.00277328f, 0.00019800f, 0.01144115f}
+    {200.0f, 0.00108072f, 0.00004870f, 0.00508059f}, // Best Score: 5962.0
+    {250.0f, 0.00188518f, 0.00010055f, 0.00835555f}, // Best Score: 8428.0
+    {300.0f, 0.00290016f, 0.00010323f, 0.01117709f}, // Best Score: 6893.0
+    {350.0f, 0.00369505f, 0.00012367f, 0.02000000f}, // Best Score: 4952.0
+    {400.0f, 0.00485637f, 0.00022979f, 0.01500000f}, // Best Score: 7465.0
+    {450.0f, 0.00284322f, 0.00024262f, 0.01463256f}, // Best Score: 7254.0
 };
 const int num_pid_profiles = sizeof(gain_schedule_table) / sizeof(gain_schedule_table[0]);
 
@@ -62,12 +64,12 @@ typedef struct {
     float height;
     float base_fan_speed;
 } feedforward_profile_t;
-/* --- 前馈速度表 --- PS:0.3这个速度是可以让小球缓慢上升的速度，这个风扇的硬件条件就找不到一个能让小球悬停的速度 */
+/* --- 前馈速度表 --- PS:0.35这个速度是可以让小球缓慢上升的速度，这个风扇的硬件条件就找不到一个能让小球悬停的速度 */
 feedforward_profile_t ff_table[] = {
-    {50.0f,  0.3f},
-    {100.0f, 0.3f},
-    {150.0f, 0.3f},
-    {200.0f, 0.3f},
+    {50.0f,  0.35f},
+    {100.0f, 0.35f},
+    {150.0f, 0.35f},
+    {200.0f, 0.35f},
     {250.0f, 0.3f},
     {300.0f, 0.3f},
     {350.0f, 0.3f},
@@ -151,7 +153,8 @@ int main(void)
     rt_kprintf("MCXA156 Ball Suspension Demo\r\n");
 
     /* 启动工作指示灯线程 */
-    working_indicate = rt_thread_create("WorkingIndicate", working_led, RT_NULL, 1024, 10, 20);
+    working_indicate = rt_thread_create("WorkingIndicate", working_led, RT_NULL, 256, 11, 20);
+    // remote_thread = rt_thread_create("RemoteComm", remote_main, RT_NULL, 1024, 11, 20);
     if (working_indicate != RT_NULL) {
         rt_thread_startup(working_indicate);
     } else {

@@ -1,8 +1,18 @@
 [
  {
+  "name": "WEBCLIENT",
+  "path": "/packages/iot/webclient",
+  "ver": "v2.2.0"
+ },
+ {
   "name": "RW007",
   "path": "/packages/iot/WiFi/rw007",
   "ver": "v2.1.0"
+ },
+ {
+  "name": "CJSON",
+  "path": "/packages/language/JSON/cJSON",
+  "ver": "v1.7.17"
  },
  {
   "name": "U8G2_OFFICIAL",
@@ -32,6 +42,11 @@
  {
   "name": "SSD1306",
   "path": "/packages/peripherals/ssd1306",
+  "ver": "latest"
+ },
+ {
+  "name": "NETWORK_SAMPLES",
+  "path": "/packages/misc/samples/network_samples",
   "ver": "latest"
  }
 ]

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wind Tunnel Control</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>Wind Tunnel Real-time Status</h1>
+    <div class="container">
+        <div class="wind-tunnel-container">
+            <h2>Live View</h2>
+            <div class="tunnel">
+                <div id="ball"></div>
+                <div id="target-line"></div>
+            </div>
+        </div>
+        <div class="dashboard-container">
+            <h2>Dashboard</h2>
+            <div class="grid-container">
+                <div class="grid-item">
+                    <span class="label">Current Height(mm):</span>
+                    <span id="current_height" class="value">...</span>
+                </div>
+                <div class="grid-item">
+                    <span class="label">Target Height(mm):</span>
+                    <span id="target_height" class="value">...</span>
+                </div>
+                <div class="grid-item">
+                    <span class="label">Ramped Height(mm):</span>
+                    <span id="ramped_height" class="value">...</span>
+                </div>
+                <div class="grid-item">
+                    <span class="label">Feedforward Speed:</span>
+                    <span id="feedforward_speed" class="value">...</span>
+                </div>
+                <div class="grid-item">
+                    <span class="label">PID KP:</span>
+                    <span id="pid_kp" class="value">...</span>
+                </div>
+                <div class="grid-item">
+                    <span class="label">PID KI:</span>
+                    <span id="pid_ki" class="value">...</span>
+                </div>
+                <div class="grid-item">
+                    <span class="label">PID KD:</span>
+                    <span id="pid_kd" class="value">...</span>
+                </div>
+                <div class="grid-item">
+                    <span class="label">Integral Error:</span>
+                    <span id="integral_error" class="value">...</span>
+                </div>
+                <div class="grid-item">
+                    <span class="label">Previous Error:</span>
+                    <span id="previous_error" class="value">...</span>
+                </div>
+                <div class="grid-item">
+                    <span class="label">Is Evaluating:</span>
+                    <span id="is_evaluating" class="value">...</span>
+                </div>
+                <div class="grid-item">
+                    <span class="label">Total Abs Error:</span>
+                    <span id="total_abs_error" class="value">...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
