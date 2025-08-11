@@ -7,8 +7,9 @@
 #include "system_vars.h"
 
 #define SERVER_PORT     5000    // 服务器监听的端口
-#define RECV_BUFSZ      64      // 接收缓冲区大小，足够接收 "get_status" 命令
-#define SEND_BUFSZ      512     // 发送缓冲区大小，确保能容纳整个JSON字符串
+#define RECV_BUFSZ      128     // 接收缓冲区大小
+#define SEND_BUFSZ      512     // 发送缓冲区大小
+#define MAX_ARGS        8       // 命令行参数最大数量
 
 // 声明在main.c中定义的函数
 extern float get_feedforward_speed(float target_height);
@@ -36,6 +37,8 @@ static void remote_server_thread_entry(void *parameter)
     
     char *recv_buf = RT_NULL;
     char *send_buf = RT_NULL;
+    char *argv[MAX_ARGS]; // 用于存放分割后的命令参数指针
+    int argc;
 
     // 分配接收和发送缓冲区
     recv_buf = rt_malloc(RECV_BUFSZ);
@@ -52,14 +55,12 @@ static void remote_server_thread_entry(void *parameter)
         return;
     }
 
-    // 1. 创建Socket
     if ((sock = socket(AF_INET, SOCK_STREAM, 0)) == -1)
     {
         rt_kprintf("[Remote] Socket error\n");
         goto __exit;
     }
 
-    // 2. 绑定Socket
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(SERVER_PORT);
     server_addr.sin_addr.s_addr = INADDR_ANY;
@@ -71,7 +72,6 @@ static void remote_server_thread_entry(void *parameter)
         goto __exit;
     }
 
-    // 3. 监听Socket
     if (listen(sock, 5) == -1)
     {
         rt_kprintf("[Remote] Listen error\n");
@@ -80,7 +80,6 @@ static void remote_server_thread_entry(void *parameter)
 
     rt_kprintf("[Remote] TCP Server waiting for client on port %d...\n", SERVER_PORT);
 
-    // 4. 服务器主循环
     while (1)
     {
         sin_size = sizeof(struct sockaddr_in);
@@ -90,33 +89,43 @@ static void remote_server_thread_entry(void *parameter)
         if (connected < 0)
         {
             rt_kprintf("[Remote] Accept connection failed! errno = %d\n", errno);
-            continue; // 继续等待下一个连接
+            continue;
         }
         rt_kprintf("[Remote] Got a connection from (%s, %d)\n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
 
-        // 5. 与客户端交互循环
+        // 与客户端交互循环
         while (1)
         {
             int bytes_received = recv(connected, recv_buf, RECV_BUFSZ - 1, 0);
             if (bytes_received <= 0)
             {
-                // 接收错误或客户端关闭连接
                 rt_kprintf("[Remote] Client disconnected or recv error.\n");
                 closesocket(connected);
-                break; // 退出内部循环，等待下一个客户端
+                break;
             }
 
-            // 清理接收到的命令 (去除\r\n)
             recv_buf[bytes_received] = '\0';
-            for (int i = 0; i < bytes_received; i++) {
-                if (recv_buf[i] == '\r' || recv_buf[i] == '\n') {
-                    recv_buf[i] = '\0';
-                }
-            }
+            char* p = strpbrk(recv_buf, "\r\n");
+            if (p) *p = '\0'; // 去掉换行符
+            // for (int i = 0; i < bytes_received; i++) {
+            //     if (recv_buf[i] == '\r' || recv_buf[i] == '\n') {
+            //         recv_buf[i] = '\0';
+            //     }
+            // }
             // rt_kprintf("[Remote] Received command: '%s'\n", recv_buf);
-
-            // 6. 解析命令并响应
-            if (strcmp(recv_buf, "get_status") == 0)
+            argc = 0;
+            char *ptr = strtok(recv_buf, " ");
+            while (ptr != NULL && argc < MAX_ARGS) {
+                argv[argc++] = ptr;
+                ptr = strtok(NULL, " ");
+            }
+ 
+            if (argc == 0) {
+                continue; // 空命令
+            }
+ 
+            // --- 根据第一个参数分发命令 ---
+            if (strcmp(argv[0], "get_status") == 0)
             {
                 // 格式化JSON字符串
                 // 为每个浮点数创建临时缓冲区，fk nano优化
@@ -124,7 +133,7 @@ static void remote_server_thread_entry(void *parameter)
                 char kp_str[20], ki_str[20], kd_str[20];
                 char integral_err_str[20], prev_err_str[20], ff_speed_str[20], total_err_str[20];
             
-                // 手动转换所有浮点数
+                // I have to 手动转换所有浮点数 (
                 float_to_string(target_h_str, target_height, 1);
                 float_to_string(ramped_h_str, ramped_height, 1);
                 float_to_string(kp_str, KP, 6);
@@ -155,7 +164,6 @@ static void remote_server_thread_entry(void *parameter)
                     ff_speed_str,
                     is_evaluating ? "true" : "false",
                     total_err_str);
-                
                 // 发送响应
                 if (send(connected, send_buf, strlen(send_buf), 0) < 0) {
                     rt_kprintf("[Remote] Send response failed.\n");
@@ -163,11 +171,19 @@ static void remote_server_thread_entry(void *parameter)
                     break;
                 }
             }
+            else if (strcmp(argv[0], "pid_tune") == 0)
+            {         
+                pid_tune(argc, argv);
+ 
+                char ok_msg[100];
+                sprintf(ok_msg, "OK: '%s' command executed.\r\n", argv);
+                send(connected, ok_msg, strlen(ok_msg), 0);
+            }
             else
             {
                 // 对于未知命令，发送错误信息
-                const char *unknown_cmd_msg = "Unknown command.\r\n";
-                send(connected, unknown_cmd_msg, strlen(unknown_cmd_msg), 0);
+                sprintf(send_buf, "ERROR: Unknown command '%s'.\r\n", argv[0]);
+                send(connected, send_buf, strlen(send_buf), 0);
             }
         }
     }

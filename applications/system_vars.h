@@ -18,4 +18,7 @@ extern float previous_error;
 extern rt_bool_t is_evaluating;     // PID 控制参数评估状态
 extern float total_abs_error;
 
+// 远程控制还是调用这个函数，懒得写专门的远程控制代码了
+void pid_tune(int argc, char **argv);
+
 #endif /* SYSTEM_VARS_H */

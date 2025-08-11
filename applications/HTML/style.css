@@ -101,3 +101,84 @@ h1, h2 {
     color: #1a2533;
     font-family: 'Courier New', Courier, monospace;
 }
+
+/* --- Control Panel Styles --- */
+.control-panel-container {
+    width: 100%;
+    max-width: 1200px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.controls-section {
+    margin-bottom: 25px;
+}
+
+.controls-section:last-child {
+    margin-bottom: 0;
+}
+
+.control-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.control-group label {
+    font-weight: 500;
+    color: #5a677d;
+    min-width: 150px;
+}
+
+.control-input {
+    padding: 8px 12px;
+    border: 1px solid #d0d9e1;
+    border-radius: 4px;
+    font-size: 14px;
+    width: 150px;
+}
+
+.control-button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    background-color: #4ecdc4;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.control-button:hover {
+    background-color: #2a9d8f;
+}
+
+/* --- Table Styles --- */
+#ff_table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+#ff_table th, #ff_table td {
+    border: 1px solid #d0d9e1;
+    padding: 10px;
+    text-align: left;
+}
+
+#ff_table th {
+    background-color: #e9eef2;
+    font-weight: 600;
+}
+
+#ff_table tbody tr:nth-child(odd) {
+    background-color: #f8f9fa;
+}
+
+#ff_table input {
+    width: 90%;
+}

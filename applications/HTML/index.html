@@ -60,12 +60,59 @@
                     <span id="is_evaluating" class="value">...</span>
                 </div>
                 <div class="grid-item">
-                    <span class="label">Total Abs Error:</span>
+                    <span class="label">Total Abs Error(Available on Evaluating):</span>
                     <span id="total_abs_error" class="value">...</span>
                 </div>
             </div>
         </div>
     </div>
+
+    <div class="control-panel-container">
+        <h2>Control Panel</h2>
+        <div class="controls-section">
+            <h3>Target Height Control</h3>
+            <div class="control-group">
+                <label for="target_height_input">Target Height (mm):</label>
+                <input type="number" id="target_height_input" step="10" class="control-input">
+                <button id="set_target_btn" class="control-button">Set Target</button>
+            </div>
+        </div>
+
+        <div class="controls-section">
+            <h3>Manual PID Override</h3>
+            <div class="control-group">
+                <label for="kp_input">Kp:</label>
+                <input type="number" id="kp_input" step="0.0001" class="control-input">
+            </div>
+            <div class="control-group">
+                <label for="ki_input">Ki:</label>
+                <input type="number" id="ki_input" step="0.0001" class="control-input">
+            </div>
+            <div class="control-group">
+                <label for="kd_input">Kd:</label>
+                <input type="number" id="kd_input" step="0.0001" class="control-input">
+            </div>
+             <button id="set_pid_btn" class="control-button">Set PID</button>
+        </div>
+
+        <div class="controls-section">
+            <h3>Feedforward Table</h3>
+            <table id="ff_table">
+                <thead>
+                    <tr>
+                        <th>Index</th>
+                        <th>Height (mm)</th>
+                        <th>Base Speed</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="ff_table_body">
+                    <!-- Rows will be dynamically inserted here by script.js -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
     <script src="script.js"></script>
 </body>
 </html>

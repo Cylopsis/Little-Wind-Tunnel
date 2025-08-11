@@ -35,7 +35,7 @@ float integral_error = 0.0f;
 float previous_error = 0.0f;
 
 /* PID 控制参数评估 */
-static void pid_tune(int argc, char **argv);
+// static void pid_tune(int argc, char **argv);
 rt_bool_t is_evaluating = RT_FALSE;
 float total_abs_error = 0.0f;
 typedef struct {
@@ -240,7 +240,7 @@ int main(void)
  * 评测用
  ******************************************************************************/
 
-static void pid_tune(int argc, char **argv)
+void pid_tune(int argc, char **argv)
 {
     if (argc < 2) {
         rt_kprintf("--- PID & Feedforward Status ---\n");
