@@ -13,15 +13,6 @@
 
 // 声明在main.c中定义的函数
 extern float get_feedforward_speed(float target_height);
-// 将浮点数转为字符串，newlib-nano中的sprintf不支持浮点数格式化!!!
-void float_to_string(char* buffer, float value, int precision) {
-    long integer_part = (long)value;
-    long fractional_part = (long)((value - integer_part) * pow(10, precision));
-    if (fractional_part < 0) {
-        fractional_part = -fractional_part;
-    }
-    sprintf(buffer, "%ld.%0*ld", integer_part, precision, fractional_part);
-}
 
 static rt_thread_t server_thread = RT_NULL;
 
@@ -35,25 +26,10 @@ static void remote_server_thread_entry(void *parameter)
     struct sockaddr_in server_addr, client_addr;
     socklen_t sin_size;
     
-    char *recv_buf = RT_NULL;
-    char *send_buf = RT_NULL;
+    char recv_buf[RECV_BUFSZ];
+    char send_buf[SEND_BUFSZ];
     char *argv[MAX_ARGS]; // 用于存放分割后的命令参数指针
     int argc;
-
-    // 分配接收和发送缓冲区
-    recv_buf = rt_malloc(RECV_BUFSZ);
-    if (recv_buf == RT_NULL)
-    {
-        rt_kprintf("[Remote] No memory for recv_buf\n");
-        return;
-    }
-    send_buf = rt_malloc(SEND_BUFSZ);
-    if (send_buf == RT_NULL)
-    {
-        rt_kprintf("[Remote] No memory for send_buf\n");
-        rt_free(recv_buf);
-        return;
-    }
 
     if ((sock = socket(AF_INET, SOCK_STREAM, 0)) == -1)
     {
@@ -114,10 +90,11 @@ static void remote_server_thread_entry(void *parameter)
             // }
             // rt_kprintf("[Remote] Received command: '%s'\n", recv_buf);
             argc = 0;
-            char *ptr = strtok(recv_buf, " ");
+            char *saveptr; // for strtok_r
+            char *ptr = strtok_r(recv_buf, " ", &saveptr);
             while (ptr != NULL && argc < MAX_ARGS) {
                 argv[argc++] = ptr;
-                ptr = strtok(NULL, " ");
+                ptr = strtok_r(NULL, " ", &saveptr);
             }
  
             if (argc == 0) {
@@ -128,42 +105,26 @@ static void remote_server_thread_entry(void *parameter)
             if (strcmp(argv[0], "get_status") == 0)
             {
                 // 格式化JSON字符串
-                // 为每个浮点数创建临时缓冲区，fk nano优化
-                char target_h_str[20], ramped_h_str[20];
-                char kp_str[20], ki_str[20], kd_str[20];
-                char integral_err_str[20], prev_err_str[20], ff_speed_str[20], total_err_str[20];
-            
-                // I have to 手动转换所有浮点数 (
-                float_to_string(target_h_str, target_height, 1);
-                float_to_string(ramped_h_str, ramped_height, 1);
-                float_to_string(kp_str, KP, 6);
-                float_to_string(ki_str, KI, 6);
-                float_to_string(kd_str, KD, 6);
-                float_to_string(integral_err_str, integral_error, 4);
-                float_to_string(prev_err_str, previous_error, 4);
-                float_to_string(ff_speed_str, get_feedforward_speed(ramped_height), 4);
-                float_to_string(total_err_str, total_abs_error, 4);
-            
                 sprintf(send_buf, "{"
-                    "\"current_height\":%d,"
-                    "\"target_height\":%s,"
-                    "\"ramped_height\":%s,"
-                    "\"pid_kp\":%s,"
-                    "\"pid_ki\":%s,"
-                    "\"pid_kd\":%s,"
-                    "\"integral_error\":%s,"
-                    "\"previous_error\":%s,"
-                    "\"feedforward_speed\":%s,"
+                    "\"current_height\":%ld,"
+                    "\"target_height\":%.2f,"
+                    "\"ramped_height\":%.2f,"
+                    "\"pid_kp\":%.6f,"
+                    "\"pid_ki\":%.6f,"
+                    "\"pid_kd\":%.6f,"
+                    "\"integral_error\":%.4f,"
+                    "\"previous_error\":%.4f,"
+                    "\"feedforward_speed\":%.4f,"
                     "\"is_evaluating\":%s,"
-                    "\"total_abs_error\":%s"
+                    "\"total_abs_error\":%.4f"
                     "}\r\n",
                     current_height,
-                    target_h_str, ramped_h_str,
-                    kp_str, ki_str, kd_str,
-                    integral_err_str, prev_err_str,
-                    ff_speed_str,
+                    target_height, ramped_height,
+                    KP, KI, KD,
+                    integral_error, previous_error,
+                    get_feedforward_speed(ramped_height),
                     is_evaluating ? "true" : "false",
-                    total_err_str);
+                    total_abs_error);
                 // 发送响应
                 if (send(connected, send_buf, strlen(send_buf), 0) < 0) {
                     rt_kprintf("[Remote] Send response failed.\n");
@@ -190,8 +151,6 @@ static void remote_server_thread_entry(void *parameter)
 
 __exit:
     if (sock >= 0) closesocket(sock);
-    if (recv_buf) rt_free(recv_buf);
-    if (send_buf) rt_free(send_buf);
     rt_kprintf("[Remote] Server thread exited.\n");
 }
 
@@ -209,7 +168,7 @@ static void remote_start(int argc, char **argv)
     server_thread = rt_thread_create("RemoteTCPSrv",
                                      remote_server_thread_entry,
                                      RT_NULL,
-                                     2048, // 增加栈空间以应对网络操作
+                                     2560,
                                      12,
                                      20);
 

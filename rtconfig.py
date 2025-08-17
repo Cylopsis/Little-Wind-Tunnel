@@ -28,8 +28,8 @@ elif CROSS_TOOL == 'iar':
 if os.getenv('RTT_EXEC_PATH'):
     EXEC_PATH = os.getenv('RTT_EXEC_PATH')
 
-BUILD = 'debug'
-#BUILD = 'release'
+# BUILD = 'debug'
+BUILD = 'release'
 
 if PLATFORM == 'gcc':
     PREFIX = 'arm-none-eabi-'
@@ -48,6 +48,7 @@ if PLATFORM == 'gcc':
     CFLAGS = DEVICE + ' -Wall -D__FPU_PRESENT'
     AFLAGS = ' -c' + DEVICE + ' -x assembler-with-cpp -D__START=entry -D__STARTUP_CLEAR_BSS'
     LFLAGS = DEVICE + ' -specs=nano.specs -specs=nosys.specs -Wl,--defsym=__heap_size__=0x8000,--gc-sections,-Map=rtthread.map,--print-memory-usage -Tboard/linker_scripts/MCXA156_flash.ld'
+    LFLAGS += ' -u _printf_float'
 
     CPATH = ''
     LPATH = ''
