@@ -20,5 +20,7 @@ extern float total_abs_error;
 
 // 远程控制还是调用这个函数，懒得写专门的远程控制代码了
 void pid_tune(int argc, char **argv);
+// OLED显示
+void screen_on();
 
 #endif /* SYSTEM_VARS_H */

@@ -19,7 +19,7 @@
  * 全局变量
  ******************************************************************************/
 rt_thread_t working_indicate = RT_NULL;
-// rt_thread_t remote_thread = RT_NULL;
+rt_thread_t screen_thread = RT_NULL;
 
 /* PID 控制器参数 */
 int32_t current_height = 20;  // 当前高度 (mm)
@@ -154,9 +154,10 @@ int main(void)
 
     /* 启动工作指示灯线程 */
     working_indicate = rt_thread_create("WorkingIndicate", working_led, RT_NULL, 256, 11, 20);
-    // remote_thread = rt_thread_create("RemoteComm", remote_main, RT_NULL, 1024, 11, 20);
-    if (working_indicate != RT_NULL) {
+    screen_thread = rt_thread_create("ScreenUpdate", screen_on, RT_NULL, 1280, 11, 20);
+    if (working_indicate != RT_NULL && screen_thread != RT_NULL) {
         rt_thread_startup(working_indicate);
+        rt_thread_startup(screen_thread);
     } else {
         rt_kprintf("Failed to create working indicate thread.\n");
     }
