@@ -89,7 +89,6 @@ float ys4028b12h_get_speed(ys4028b12h_cfg_t cfg)
     if (cfg->name == RT_NULL)
     {
         rt_kprintf("not find the ys4028b12h device\n");
-
         return RT_ERROR;
     }
     else{

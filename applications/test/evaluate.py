@@ -17,7 +17,7 @@ BAUD_RATE = 115200
 EVAL_DURATION_MS = 30000  # 每次评估的持续时间（毫秒）
 TOTAL_CALLS_PER_PROFILE = 60 # 每个高度配置的总优化迭代次数
 RESET_DURATION_S = 3      # 两次测试之间，风扇停机的复位时间（秒）
-RESULTS_FILE = "./gain_scheduling_results.json" # 将文件名定义为常量
+RESULTS_FILE = "./gain_scheduling_results.json" # 上次优化结果
 
 # --- 增益调度目标配置 (Gain Scheduling Profiles) ---
 # 这是核心配置。脚本会为列表中的每个字典（代表一个高度）运行一次完整的优化。
@@ -133,7 +133,7 @@ def load_initial_points_from_results(profiles, filepath):
     return profiles
 
 # ==============================================================================
-# --- 主逻辑区 (无变化) ---
+# --- 主逻辑区 ---
 # ==============================================================================
 
 def send_cmd(cmd_to_send, wait_time=0.1):
@@ -206,13 +206,13 @@ def objective_function(params):
     return 1e9
 
 # ==============================================================================
-# --- MAIN 执行区 (已修改) ---
+# --- MAIN 执行区 ---
 # ==============================================================================
 
 if __name__ == '__main__':
     all_results = {}
     
-    # --- 关键修改: 在开始前加载历史数据 ---
+    # --- 在开始前加载历史数据 ---
     print("\n" + "="*60)
     print("           Attempting to load previous results...           ")
     print("="*60)
